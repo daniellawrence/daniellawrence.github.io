@@ -1,0 +1,13 @@
+<div class="container">
+  <div class="page-header">
+
+    <h2>
+      <a href="/">/</a>
+      <strong>daniel</strong>lawrence 
+    </h2>
+    {% if page.title != "blog" %}
+       <a href="/blog/">/blog</a>
+    {{ page.title }}
+    {% else %}
+    {% endif %}
+  </div>

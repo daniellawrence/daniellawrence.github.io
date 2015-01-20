@@ -1,0 +1,22 @@
+---
+
+layout: post
+title:  "Website refresh"
+date:   Tuesday 20 January  18:59:52 AEDT 2015
+categories: blog
+
+---
+
+<Br />
+
+New year, New website.
+<Br />
+<Br />
+
+I have switched over from a hacky static generated website that I rolled one night over to [jekyll](http://jekyllrb.com).
+
+<Br />
+This is hosted by [github's pages](https://pages.github.com), and you can see how it all works in [my git repo](https://github.com/daniellawrence/daniellawrence.github.io/) for this site.
+
+
+
