@@ -43,4 +43,3 @@ EOF
 Start Emacs
 
     $ emacs
-
