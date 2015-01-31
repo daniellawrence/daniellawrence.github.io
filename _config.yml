@@ -1,7 +1,7 @@
 # Site settings
 title: Daniel Lawrence
 email: dannyla@linux.com
-description: > # this means to ignore newlines until "baseurl:"
+# description: 
 baseurl: "/" # the subpath of your site, e.g. /blog/
 url: "http://dansysadm.com" # the base hostname & protocol for your site
 
