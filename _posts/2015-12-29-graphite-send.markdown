@@ -1,3 +1,12 @@
+---
+
+layout: post
+title: Graphite Send
+date: 2015-12-29 22:21:02
+category: blog
+
+---
+
 This is an overview about how you can send data to a remote graphite server using python.
 
 This overview will take advantage of an opensource python module called [graphitesend](https://github.com/daniellawrence/graphitesend), that you can find on [github.com](https://github.com/daniellawrence/graphitesend) or via [pypi.python.org](https://pypi.python.org/pypi/graphitesend/).
