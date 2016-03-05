@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>testing golang with go test | Daniel Lawrence</title>
+  <meta name="description" content="You can use go test command for testing go packages very easily.">
+
+  <!-- <link rel="stylesheet" href="//css/main.css"> -->
+  <link rel="canonical" href="http://dansysadm.com//blog/2015/01/31/testing-golang-with-go-test.html">
+  <link rel="alternate" type="application/rss+xml" title="Daniel Lawrence" href="http://dansysadm.com//feed.xml" />
+
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" 
+	rel="stylesheet" type="text/css" />
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" 
+	rel="stylesheet" type="text/css" />
+  <link href="/css/main.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+
+  <body>
+
+    <div class="container">
+  <div class="page-header">
+
+    <h2>
+      <a href="/">/</a>
+      <strong>daniel</strong>lawrence 
+    </h2>
+    
+       <a href="/blog/">/blog</a>
+    testing golang with go test
+    
+  </div>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+  <article class="post-content">
+    <p>You can use <code class="highlighter-rouge">go test</code> command for testing go packages very easily.</p>
+
+<p><br /></p>
+
+<h2 id="file-names">file names</h2>
+
+<p>For every go source file that you have ( this example <code class="highlighter-rouge">main.go</code>) you will need a &lt;name&gt;_test.go file that contains the tests (<code class="highlighter-rouge">main_test.go</code> for example).</p>
+
+<p><br /></p>
+
+<h2 id="function-names">function names</h2>
+
+<p>The functions within the <code class="highlighter-rouge">&lt;name&gt;_test.go</code> file will need to start with the keyword <code class="highlighter-rouge">Test</code> and then have the suffix of a function that you wish to test.</p>
+
+<p>To test a function called <code class="highlighter-rouge">AddNumbers</code> in main.go, we create a function called <code class="highlighter-rouge">TestAddNumbers</code> in main_test.go.</p>
+
+<p><br /></p>
+
+<h2 id="imports">Imports</h2>
+
+<p>We can use the <code class="highlighter-rouge">testing</code> library to help us out with testing go files, its in the go standard library has a nice <a href="http://golang.org/pkg/testing/#B.Error">Error()</a> function, that we use to format output.</p>
+
+<p>An example of the output it can generate is below.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="gd">--- FAIL: TestAddNumbers (0.00 seconds)
+</span>main_test.go:13: For Adding 1 + 2 expected 3 got 4
+FAIL
+exit status 1
+FAIL	_/home/dannyla/code/github/go-examples	0.002s
+</code></pre>
+</div>
+
+<p><br /></p>
+
+<h2 id="example">Example</h2>
+
+<p>main.go</p>
+
+<noscript><pre>400: Invalid request
+</pre></noscript>
+<script src="https://gist.github.com/49b3be0b08aa0571d27b.js?file=main.go"> </script>
+
+<p>main_test.go</p>
+
+<noscript><pre>400: Invalid request
+</pre></noscript>
+<script src="https://gist.github.com/49b3be0b08aa0571d27b.js?file=main_test.go"> </script>
+
+
+  </article>
+
+</div>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+ /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+ var disqus_shortname = 'dansysadm'; // required: replace example with your forum shortname
+  
+ /* * * DON'T EDIT BELOW THIS LINE * * */
+ (function() {
+     var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+     dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+     (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+ })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+      </div>
+    </div>
+
+    
+</div>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  
+  ga('create', 'UA-36354656-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+  </body>
+
+</html>

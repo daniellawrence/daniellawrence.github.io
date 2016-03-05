@@ -1,0 +1,844 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Daniel Lawrence</title>
+    <description></description>
+    <link>http://dansysadm.com//</link>
+    <atom:link href="http://dansysadm.com//feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Sat, 05 Mar 2016 12:14:09 -0800</pubDate>
+    <lastBuildDate>Sat, 05 Mar 2016 12:14:09 -0800</lastBuildDate>
+    <generator>Jekyll v3.1.2</generator>
+    
+      <item>
+        <title>Graphite Send</title>
+        <description>&lt;p&gt;This is an overview about how you can send data to a remote graphite server using python.&lt;/p&gt;
+
+&lt;p&gt;This overview will take advantage of an opensource python module called &lt;a href=&quot;https://github.com/daniellawrence/graphitesend&quot;&gt;graphitesend&lt;/a&gt;, that you can find on &lt;a href=&quot;https://github.com/daniellawrence/graphitesend&quot;&gt;github.com&lt;/a&gt; or via &lt;a href=&quot;https://pypi.python.org/pypi/graphitesend/&quot;&gt;pypi.python.org&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-goal&quot;&gt;The goal&lt;/h2&gt;
+
+&lt;p&gt;We are going to take the &lt;a href=&quot;https://github.com/graphite-project/graphite-web/blob/master/examples/example-client.py&quot;&gt;example that comes with the graphite install about sending the load avg.&lt;/a&gt; from a linux.&lt;/p&gt;
+
+&lt;p&gt;The example code does not use any any extra python modules, which is nice when your getting started. However pulling in the &lt;a href=&quot;https://github.com/daniellawrence/graphitesend&quot;&gt;graphitesend&lt;/a&gt; library will make it all a bit easier.&lt;/p&gt;
+
+&lt;h2 id=&quot;installing-the-graphitesend-module&quot;&gt;Installing the graphitesend module&lt;/h2&gt;
+&lt;p&gt;You can install the module via pip and &lt;a href=&quot;https://pypi.python.org/pypi/graphitesend/&quot;&gt;pypi.python.org&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$ &lt;/span&gt;sudo pip install graphitesend
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;You can also install from the source from &lt;a href=&quot;https://github.com/daniellawrence/graphitesend&quot;&gt;github.com&lt;/a&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$ &lt;/span&gt;git clone https://github.com/daniellawrence/graphitesend
+&lt;span class=&quot;gp&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;cd &lt;/span&gt;graphitesend
+&lt;span class=&quot;gp&quot;&gt;$ &lt;/span&gt;sudo python ./setup.py install
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;gather-the-data&quot;&gt;Gather the data&lt;/h2&gt;
+
+&lt;p&gt;Before you can send the data to graphite, you need to be able to gather the data in the first place.
+Open up the /proc/loadavg file and grab the first 3 columns.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;la1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;la5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;la15&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;/proc/loadavg&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;read&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;strip&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;split&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()[:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;la1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;la5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;la15&lt;/span&gt;
+&lt;span class=&quot;mf&quot;&gt;0.35&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.34&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.30&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now we have 3 variables that contain the loadavg data for 1,5 and 15 minute avg.&lt;/p&gt;
+
+&lt;h2 id=&quot;sending-the-data-to-graphite&quot;&gt;Sending the data to graphite&lt;/h2&gt;
+
+&lt;p&gt;In this example we are going to assume that your graphite server is called &lt;strong&gt;graphite&lt;/strong&gt; and its listening on port &lt;strong&gt;2003&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;graphitesend&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;g&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;graphitesend&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;group&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;loadavg_&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&#39;sent 51 long message: systems.&amp;lt;hostname&amp;gt;.loadavg_1min 0.470000 1365154443&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt; &#39;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;g&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;5min&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;la5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&#39;sent 51 long message: systems.&amp;lt;hostname&amp;gt;.loadavg_5min 0.280000 1365154469&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt; &#39;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;g&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;15min&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;la15&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&#39;sent 52 long message: systems.&amp;lt;hostname&amp;gt;.loadavg_15min 0.280000 1365154474&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt; &#39;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;If your graphite instance is not called &lt;strong&gt;graphite&lt;/strong&gt; or maybe not listening on port &lt;strong&gt;2003&lt;/strong&gt;. 
+Then you can just change it in the init().&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;graphitesend&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;graphite_server&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;graphite.prod.example.com&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;graphite_port&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1234&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now throw loadavg. gather into a while loop, like the example from the graphite project.&lt;/p&gt;
+
+&lt;p&gt;We are also using the suffix keyword arg in the init() function to suffix all the metric names with ‘min’.&lt;/p&gt;
+
+&lt;p&gt;The &lt;strong&gt;send_dict()&lt;/strong&gt; lets us send a dict of data points as long as they are simple key,value pairs.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;#!/usr/bin/env python&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;time&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;graphitesend&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;g&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;graphitesend&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;group&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;loadavg_&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;suffix&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;min&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;la1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;la5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;la15&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;/proc/loadavg&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;read&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;strip&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;split&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()[:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;g&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send_dict&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;1&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;la1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;5&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;la5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;15&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;la15&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sleep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;delay&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;This will send 3 metrics to graphite with the following names.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;systems.&amp;lt;hostname&amp;gt;.loadavg_1min
+systems.&amp;lt;hostname&amp;gt;.loadavg_15min
+systems.&amp;lt;hostname&amp;gt;.loadavg_5min
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;more-advanced-example&quot;&gt;More advanced example&lt;/h2&gt;
+
+&lt;p&gt;Lets take a file with some alot more data the /proc/loadavg, we can take the /proc/net/netstat file.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cat /proc/net/netstat
+TcpExt: SyncookiesSent SyncookiesRecv SyncookiesFailed EmbryonicRsts PruneCalled RcvPruned OfoPruned OutOfWindowIcmps LockDroppedIcmps ArpFilter TW TWRecycled TWKilled PAWSPassive PAWSActive PAWSEstab DelayedACKs DelayedACKLocked DelayedACKLost ListenOverflows ListenDrops TCPPrequeued TCPDirectCopyFromBacklog TCPDirectCopyFromPrequeue TCPPrequeueDropped TCPHPHits TCPHPHitsToUser TCPPureAcks TCPHPAcks TCPRenoRecovery TCPSackRecovery TCPSACKReneging TCPFACKReorder TCPSACKReorder TCPRenoReorder TCPTSReorder TCPFullUndo TCPPartialUndo TCPDSACKUndo TCPLossUndo TCPLostRetransmit TCPRenoFailures TCPSackFailures TCPLossFailures TCPFastRetrans TCPForwardRetrans TCPSlowStartRetrans TCPTimeouts TCPRenoRecoveryFail TCPSackRecoveryFail TCPSchedulerFailed TCPRcvCollapsed TCPDSACKOldSent TCPDSACKOfoSent TCPDSACKRecv TCPDSACKOfoRecv TCPAbortOnSyn TCPAbortOnData TCPAbortOnClose TCPAbortOnMemory TCPAbortOnTimeout TCPAbortOnLinger TCPAbortFailed TCPMemoryPressures TCPSACKDiscard TCPDSACKIgnoredOld TCPDSACKIgnoredNoUndo TCPSpuriousRTOs TCPMD5NotFound TCPMD5Unexpected TCPSackShifted TCPSackMerged TCPSackShiftFallback TCPBacklogDrop TCPMinTTLDrop TCPDeferAcceptDrop IPReversePathFilter TCPTimeWaitOverflow TCPReqQFullDoCookies TCPReqQFullDrop TCPRetransFail TCPRcvCoalesce
+TcpExt: 0 0 0 0 0 0 0 0 0 0 241 0 0 0 0 5 1828 1 315 0 0 40838 81 38684878 0 141783 22891 3477 2855 0 2 0 0 0 0 0 0 0 0 57 0 0 0 0 2 0 14 92 0 0 1 0 357 10 47 0 0 53 60 0 4 0 0 0 0 0 6 0 0 0 0 0 32 0 0 16 0 0 0 0 0 41419
+IpExt: InNoRoutes InTruncatedPkts InMcastPkts OutMcastPkts InBcastPkts OutBcastPkts InOctets OutOctets InMcastOctets OutMcastOctets InBcastOctets OutBcastOctets
+IpExt: 2 0 123 125 172 12 315907582 12881887 62007 60884 44576 548
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;graph-the-data-then-sent-it-to-graphite&quot;&gt;Graph the data then sent it to graphite&lt;/h2&gt;
+
+&lt;p&gt;To turn the above mess into a graphite data, its going to take 9 lines of code!&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;#!/usr/bin/env python&lt;/span&gt;
+
+&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;graphitesend&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;lines&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;/proc/net/netstat&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;readlines&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Throw away the first colum as it has a text value&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;tcp_metrics&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lines&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;split&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:]&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;tcp_values&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lines&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;split&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:]&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;ip_metrics&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lines&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;split&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:]&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;ip_values&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lines&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;split&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:]&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# zip the 2 lists into 1 list.&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;data_list&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;zip&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tcp_metrics&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ip_metrics&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tcp_values&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ip_values&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;g&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;graphitesend&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;group&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;netstat.&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;g&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send_list&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data_list&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The above script generates metrics over to graphite that look like this.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;systems.&amp;lt;hostname&amp;gt;.netstat.InBcastPkts 211.000000 1365156828
+systems.&amp;lt;hostname&amp;gt;.netstat.OutBcastPkts 12.000000 1365156828
+systems.&amp;lt;hostname&amp;gt;.netstat.InOctets 329841457.000000 1365156828
+systems.&amp;lt;hostname&amp;gt;.netstat.OutOctets 13542993.000000 1365156828
+systems.&amp;lt;hostname&amp;gt;.netstat.InMcastOctets 62007.000000 1365156828
+systems.&amp;lt;hostname&amp;gt;.netstat.OutMcastOctets 60884.000000 1365156828
+systems.&amp;lt;hostname&amp;gt;.netstat.InBcastOctets 55275.000000 1365156828
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;If you did not like the fact that is mixed case, then you can just throw this in the init() function&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;g&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;graphitesend&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;lowercase_metric_names&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;conclusion&lt;/h2&gt;
+
+&lt;p&gt;Graphite is awesome!&lt;/p&gt;
+
+&lt;p&gt;Hopefully graphitesend lets you take advantage of putting more metrics into graphite.&lt;/p&gt;
+
+</description>
+        <pubDate>Tue, 29 Dec 2015 14:21:02 -0800</pubDate>
+        <link>http://dansysadm.com//blog/2015/12/29/graphite-send.html</link>
+        <guid isPermaLink="true">http://dansysadm.com//blog/2015/12/29/graphite-send.html</guid>
+        
+        
+        <category>blog</category>
+        
+      </item>
+    
+      <item>
+        <title>OSX for linux people</title>
+        <description>&lt;p&gt;Moving to my first OSX laptop for work from my linux machines.
+I needed to fix a few things to keep me happy.&lt;/p&gt;
+
+&lt;p&gt;Install homebrew to get a cli based package manager&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ruby -e &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)&quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Install coreutils&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;brew install coreutils
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Install wget&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;brew install wget
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Install emacs (24+)&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;brew install emacs
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Install X11 (xquartz) to allow X11 apps to run&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Download the pkg from http://xquartz.macosforge.org/landing/&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;You will need to update your path in order to use the nicer tools&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cat &amp;lt;&amp;lt; EOF &amp;gt;&amp;gt; ~/.bashrc
+export PATH=&quot;/usr/local/bin:$PATH&quot;
+export MANPATH=&quot;/usr/local/opt/coreutils/libexec/gnuman:$MANPATH&quot;
+EOF
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Restart your machine.&lt;/p&gt;
+</description>
+        <pubDate>Sun, 15 Feb 2015 14:21:02 -0800</pubDate>
+        <link>http://dansysadm.com//blog/2015/02/15/OSX-for-linux-people.html</link>
+        <guid isPermaLink="true">http://dansysadm.com//blog/2015/02/15/OSX-for-linux-people.html</guid>
+        
+        
+        <category>blog</category>
+        
+      </item>
+    
+      <item>
+        <title>getting started with CoreOS via QEMU</title>
+        <description>&lt;p&gt;Install QEMU&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sudo apt-get install qemu-system-x86 qemu-utils
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Grab everything required from coreos.com&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;mkdir coreos; cd coreos
+wget http://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu.sh
+wget http://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2 -O - | bzcat &amp;gt; coreos_production_qemu_image.img
+chmod +x coreos_production_qemu.sh
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Copy over your public keys that you have authorized on you machine to the machine we going to start running CoreOS&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;./coreos_production_qemu.sh -a ~/.ssh/authorized_keys -- -nographic
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Configure your ssh&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cat &amp;lt;&amp;lt; EOF &amp;gt;&amp;gt; ~/.ssh/config
+Host coreos
+    HostName localhost
+    Port 2222
+    User core
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+EOF
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Connect to your newly built CoreOS machine&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ssh coreos
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Test our CoreOS by running busybox&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker run busybox /bin/echo hello world
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Startup etcd and fleet via systemd&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sudo systemctl start etcd
+sudo systemctl start fleetctl
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Testing CoreOS with fleet&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cat &amp;lt;&amp;lt; EOF &amp;gt; hello.service
+[Unit]
+Description=My Service
+After=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill hello
+ExecStartPre=-/usr/bin/docker rm hello
+ExecStartPre=/usr/bin/docker pull busybox
+ExecStart=/usr/bin/docker run --name hello busybox /bin/sh -c &quot;while true; do echo Hello World; sleep 1; done&quot;
+ExecStop=/usr/bin/docker stop hello
+EOF
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Load the hello.service via fleet&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;fleetctl load hello.service
+Unit hello.service loaded on e81bb63c.../10.0.2.15
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Start the hello.service via fleet&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;fleetctl start hello.service
+Unit hello.service launched on e81bb63c.../10.0.2.15
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Verify its working via systemd and docker&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;fleetctl start hello.service
+● hello.service
+  Loaded: loaded (/run/fleet/units/hello.service; linked-runtime)
+  Active: active (running) since Mon 2015-02-02 04:38:40 UTC; 4s ago
+Process: 1118 ExecStop=/usr/bin/docker stop hello (code=exited, status=0/SUCCESS)
+Process: 1400 ExecStartPre=/usr/bin/docker pull busybox (code=exited, status=0/SUCCESS)
+Process: 1391 ExecStartPre=/usr/bin/docker rm hello (code=exited, status=1/FAILURE)
+Process: 1383 ExecStartPre=/usr/bin/docker kill hello (code=exited, status=1/FAILURE)
+Main PID: 1435 (docker)
+  CGroup: /system.slice/hello.service
+  └─1435 /usr/bin/docker run --name hello busybox /bin/sh -c while true; do echo Hello World; sleep 1; done
+Feb 02 04:38:40 coreos_production_qemu-522-6-0 systemd[1]: Started hello.service.
+Feb 02 04:38:40 coreos_production_qemu-522-6-0 docker[1400]: Status: Image is up to date for busybox:latest
+Feb 02 04:38:41 coreos_production_qemu-522-6-0 docker[1435]: Hello World
+Feb 02 04:38:42 coreos_production_qemu-522-6-0 docker[1435]: Hello World
+Feb 02 04:38:43 coreos_production_qemu-522-6-0 docker[1435]: Hello World
+Feb 02 04:38:44 coreos_production_qemu-522-6-0 docker[1435]: Hello World
+Feb 02 04:38:45 coreos_production_qemu-522-6-0 docker[1435]: Hello World
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+</description>
+        <pubDate>Mon, 02 Feb 2015 07:19:10 -0800</pubDate>
+        <link>http://dansysadm.com//blog/2015/02/02/getting-started-with-CoreOS.html</link>
+        <guid isPermaLink="true">http://dansysadm.com//blog/2015/02/02/getting-started-with-CoreOS.html</guid>
+        
+        
+        <category>blog</category>
+        
+      </item>
+    
+      <item>
+        <title>testing golang with go test</title>
+        <description>&lt;p&gt;You can use &lt;code class=&quot;highlighter-rouge&quot;&gt;go test&lt;/code&gt; command for testing go packages very easily.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;file-names&quot;&gt;file names&lt;/h2&gt;
+
+&lt;p&gt;For every go source file that you have ( this example &lt;code class=&quot;highlighter-rouge&quot;&gt;main.go&lt;/code&gt;) you will need a &amp;lt;name&amp;gt;_test.go file that contains the tests (&lt;code class=&quot;highlighter-rouge&quot;&gt;main_test.go&lt;/code&gt; for example).&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;function-names&quot;&gt;function names&lt;/h2&gt;
+
+&lt;p&gt;The functions within the &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;lt;name&amp;gt;_test.go&lt;/code&gt; file will need to start with the keyword &lt;code class=&quot;highlighter-rouge&quot;&gt;Test&lt;/code&gt; and then have the suffix of a function that you wish to test.&lt;/p&gt;
+
+&lt;p&gt;To test a function called &lt;code class=&quot;highlighter-rouge&quot;&gt;AddNumbers&lt;/code&gt; in main.go, we create a function called &lt;code class=&quot;highlighter-rouge&quot;&gt;TestAddNumbers&lt;/code&gt; in main_test.go.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;imports&quot;&gt;Imports&lt;/h2&gt;
+
+&lt;p&gt;We can use the &lt;code class=&quot;highlighter-rouge&quot;&gt;testing&lt;/code&gt; library to help us out with testing go files, its in the go standard library has a nice &lt;a href=&quot;http://golang.org/pkg/testing/#B.Error&quot;&gt;Error()&lt;/a&gt; function, that we use to format output.&lt;/p&gt;
+
+&lt;p&gt;An example of the output it can generate is below.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- FAIL: TestAddNumbers (0.00 seconds)
+&lt;/span&gt;main_test.go:13: For Adding 1 + 2 expected 3 got 4
+FAIL
+exit status 1
+FAIL	_/home/dannyla/code/github/go-examples	0.002s
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;example&quot;&gt;Example&lt;/h2&gt;
+
+&lt;p&gt;main.go&lt;/p&gt;
+
+&lt;noscript&gt;&lt;pre&gt;400: Invalid request
+&lt;/pre&gt;&lt;/noscript&gt;
+&lt;script src=&quot;https://gist.github.com/49b3be0b08aa0571d27b.js?file=main.go&quot;&gt; &lt;/script&gt;
+
+&lt;p&gt;main_test.go&lt;/p&gt;
+
+&lt;noscript&gt;&lt;pre&gt;400: Invalid request
+&lt;/pre&gt;&lt;/noscript&gt;
+&lt;script src=&quot;https://gist.github.com/49b3be0b08aa0571d27b.js?file=main_test.go&quot;&gt; &lt;/script&gt;
+
+</description>
+        <pubDate>Sat, 31 Jan 2015 01:52:11 -0800</pubDate>
+        <link>http://dansysadm.com//blog/2015/01/31/testing-golang-with-go-test.html</link>
+        <guid isPermaLink="true">http://dansysadm.com//blog/2015/01/31/testing-golang-with-go-test.html</guid>
+        
+        
+        <category>blog</category>
+        
+      </item>
+    
+      <item>
+        <title>switch from vim to Emacs</title>
+        <description>&lt;p&gt;This page should help you get started on your Emacs journey from using vim.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;How I start with transition most people from vim over to Emacs, is first turning Emacs into a vim clone. Then help slowly them explore the features of Emacs.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;Lets setup a quick &lt;code class=&quot;highlighter-rouge&quot;&gt;~/.emacs&lt;/code&gt; file that will turn make Emacs behave like vim.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-lisp&quot; data-lang=&quot;lisp&quot;&gt;$ cat &amp;lt;&amp;lt; EOF &amp;gt; ~/.emacs
+  (require &#39;package)
+  (package-initialize)
+  (add-to-list &#39;package-archives &#39;(&quot;gnu&quot; . &quot;http://elpa.gnu.org/packages/&quot;))
+  (add-to-list &#39;package-archives &#39;(&quot;melpa&quot; . &quot;http://melpa.org/packages/&quot;))
+  (add-to-list &#39;package-archives &#39;(&quot;melpa&quot; . &quot;http://melpa.milkbox.net/packages/&quot;))
+  (add-to-list &#39;package-archives &#39;(&quot;marmalade&quot; . &quot;http://marmalade-repo.org/packages/&quot;))
+  (package-refresh-contents)
+  (package-install &#39;evil)
+  ;; Enable evil for vim bindings
+  (require &#39;evil)
+  ;; Turn on VIM emulation
+  (evil-mode 1)
+  ;; Turn off all the bars, just like a vim terminal session
+  (menu-bar-mode -1)
+  (toggle-scroll-bar -1)
+  (tool-bar-mode -1)
+  ;; show line numbers in the side bar
+  (linum-mode -1)
+EOF&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Start Emacs&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ emacs
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+</description>
+        <pubDate>Wed, 21 Jan 2015 14:53:37 -0800</pubDate>
+        <link>http://dansysadm.com//blog/2015/01/21/switch-from-vim-to-emacs.html</link>
+        <guid isPermaLink="true">http://dansysadm.com//blog/2015/01/21/switch-from-vim-to-emacs.html</guid>
+        
+        
+        <category>blog</category>
+        
+      </item>
+    
+      <item>
+        <title>using docker in continuous integration (CI)</title>
+        <description>&lt;p&gt;Attached is a shell script that will help you to run your application within docker for your CI system.&lt;/p&gt;
+
+&lt;p&gt;It will take care of..&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Naming the container based on the git version and repo name.&lt;/li&gt;
+  &lt;li&gt;Grabbing any base images that you require&lt;/li&gt;
+  &lt;li&gt;Sending the output to STDOUT&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;It will assume that your have a &lt;code class=&quot;highlighter-rouge&quot;&gt;Dockerfile&lt;/code&gt; in your current working directory when calling the script.&lt;/p&gt;
+
+&lt;noscript&gt;&lt;pre&gt;400: Invalid request
+&lt;/pre&gt;&lt;/noscript&gt;
+&lt;script src=&quot;https://gist.github.com/5174d159357136239498.js&quot;&gt; &lt;/script&gt;
+
+</description>
+        <pubDate>Wed, 21 Jan 2015 11:18:14 -0800</pubDate>
+        <link>http://dansysadm.com//blog/2015/01/21/using-docker-in-ci.html</link>
+        <guid isPermaLink="true">http://dansysadm.com//blog/2015/01/21/using-docker-in-ci.html</guid>
+        
+        
+        <category>blog</category>
+        
+      </item>
+    
+      <item>
+        <title>posting jekyll from emacs</title>
+        <description>&lt;p&gt;Short blog post about how I can post updates into jekyll from emacs using a very simple function.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-lisp&quot; data-lang=&quot;lisp&quot;&gt;    (defun new-blog-post (title)
+     (interactive &quot;s&quot;)
+     (let ((date (format-time-string &quot;%Y-%m-%d&quot;)))
+       (find-file (
+		   format 
+		   &quot;~/code/github/daniellawrence.github.io/_posts/%s-%s.markdown&quot; 
+		   date (replace-regexp-in-string &quot; &quot; &quot;-&quot; title)))
+       (insert &quot;---\n\n&quot;)
+       (insert &quot;layout: post\n&quot;)
+       (insert (format &quot;title: %s\n&quot; title))
+       (insert (format-time-string &quot;date: %Y-%m-%d %H:%M:%S\n&quot;))
+       (insert &quot;category: blog\n\n&quot;)
+       (insert &quot;---\n\n\n&quot;)
+       (markdown-mode)))&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Now &lt;code class=&quot;highlighter-rouge&quot;&gt;M-x new-blog-post&lt;/code&gt; will create a new blog post for me, I just need to commit the changes &lt;code class=&quot;highlighter-rouge&quot;&gt;M-z&lt;/code&gt; and then push them back up to danysadm.com via github.com pages.&lt;/p&gt;
+
+&lt;p&gt;You can see my whole &lt;code class=&quot;highlighter-rouge&quot;&gt;~/.emacs&lt;/code&gt; configuration file on &lt;a href=&quot;https://github.com/daniellawrence/dot-files/blob/master/dot-emacs&quot;&gt;github.com&lt;/a&gt;.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;hooray-for-emacs&quot;&gt;Hooray for emacs&lt;/h2&gt;
+</description>
+        <pubDate>Wed, 21 Jan 2015 10:14:34 -0800</pubDate>
+        <link>http://dansysadm.com//blog/2015/01/21/posting-jekyll-from-emacs.html</link>
+        <guid isPermaLink="true">http://dansysadm.com//blog/2015/01/21/posting-jekyll-from-emacs.html</guid>
+        
+        
+        <category>blog</category>
+        
+      </item>
+    
+      <item>
+        <title>Website refresh</title>
+        <description>&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;New year, New website.
+&lt;br /&gt;
+&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;I have switched over from a hacky static generated website that I rolled one night over to &lt;a href=&quot;http://jekyllrb.com&quot;&gt;jekyll&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+This is hosted by &lt;a href=&quot;https://pages.github.com&quot;&gt;github’s pages&lt;/a&gt;, and you can see how it all works in &lt;a href=&quot;https://github.com/daniellawrence/daniellawrence.github.io/&quot;&gt;my git repo&lt;/a&gt; for this site.&lt;/p&gt;
+
+</description>
+        <pubDate>Tue, 20 Jan 2015 18:59:52 -0800</pubDate>
+        <link>http://dansysadm.com//blog/2015/01/20/newsite.html</link>
+        <guid isPermaLink="true">http://dansysadm.com//blog/2015/01/20/newsite.html</guid>
+        
+        
+        <category>blog</category>
+        
+      </item>
+    
+      <item>
+        <title>Solaris netstat tcp protocol statistics explained</title>
+        <description>&lt;p&gt;The netstat command on Solaris is a fantastic gateway to all your TCP statistics of your system.&lt;/p&gt;
+
+&lt;p&gt;You would have used the netstat -an command in the past.
+However the netstat -s -P tcp can give you up-to-date statistics about what your TCP stack has been up to…&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ nestat -s -P tcp
+TCP
+  tcpRtoAlgorithm     =     4     tcpRtoMin           =   400
+  tcpRtoMax           = 60000     tcpMaxConn          =    -1
+  tcpActiveOpens      =7624114    tcpPassiveOpens     =7084624
+  tcpAttemptFails     =1896763    tcpEstabResets      =193326
+  tcpCurrEstab        =    74     tcpOutSegs          =21843389688
+  tcpOutDataSegs      =3328351751 tcpOutDataBytes     =3235412917
+  tcpRetransSegs      =41967918   tcpRetransBytes     =2212890976
+  tcpOutAck           =853704065  tcpOutAckDelayed    =247961090
+  tcpOutUrg           =     1     tcpOutWinUpdate     =477772
+  tcpOutWinProbe      = 12412     tcpOutControl       =33045410
+  tcpOutRsts          =5285917    tcpOutFastRetrans   =  8210
+  tcpInSegs           =11491393189
+  tcpInAckSegs        =1158661729 tcpInAckBytes       =1102332654
+  tcpInDupAck         =142544351  tcpInAckUnsent      =     0
+  tcpInInorderSegs    =1884725886 tcpInInorderBytes   =1286627563
+  tcpInUnorderSegs    =1912668    tcpInUnorderBytes   =2409325298
+  tcpInDupSegs        =34780066   tcpInDupBytes       =1415828491
+  tcpInPartDupSegs    =  3626     tcpInPartDupBytes   =1693311
+  tcpInPastWinSegs    =2269167    tcpInPastWinBytes   =126796354
+  tcpInWinProbe       =  1057     tcpInWinUpdate      = 11758
+  tcpInClosed         =3426232    tcpRttNoUpdate      =445365299
+  tcpRttUpdate        =706469685  tcpTimRetrans       =1305409
+  tcpTimRetransDrop   =  2328     tcpTimKeepalive     = 75510
+  tcpTimKeepaliveProbe= 28677     tcpTimKeepaliveDrop =   193
+  tcpListenDrop       =    11     tcpListenDropQ0     =     0
+  tcpHalfOpenDrop     =     0     tcpOutSackRetrans   =40485027
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;As you can see this is a head of data that you now have at your finger tips, however the man pages have no explanation what each of the items are in this list.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; $ man netstat
+ -s
+     Show per-protocol statistics.
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The source code has a little bit more data (http://src.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/uts/common/inet/mib2.h#mib2_tcp) to get to started…&lt;/p&gt;
+
+&lt;h2 id=&quot;sockets&quot;&gt;Sockets&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpRtoAlgorithm:&lt;/strong&gt; algorithm used for transmit timeout value&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpRtoMin:&lt;/strong&gt; minimum retransmit timeout (ms)&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpRtoMax:&lt;/strong&gt; maximum retransmit timeout (ms)&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpMaxConn:&lt;/strong&gt; maximum # of connections supported&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpActiveOpens:&lt;/strong&gt; # of direct transitions CLOSED -&amp;gt; SYN-SENT&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpPassiveOpens:&lt;/strong&gt; # of direct transitions LISTEN -&amp;gt; SYN-RCVD&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpAttemptFails:&lt;/strong&gt; # of direct SIN-SENT/RCVD -&amp;gt; CLOSED/LISTEN&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpEstabResets:&lt;/strong&gt; # of direct ESTABLISHED/CLOSE-WAIT -&amp;gt; CLOSED&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpCurrEstab:&lt;/strong&gt; # of connections ESTABLISHED or CLOSE-WAIT&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInSegs:&lt;/strong&gt; total # of segments recv’d&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpOutSegs:&lt;/strong&gt; total # of segments sent&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpRetransSegs:&lt;/strong&gt; total # of segments retransmitted&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpConnTableSize:&lt;/strong&gt; Size of tcpConnEntry_t in ip&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpOutRsts:&lt;/strong&gt; # of segments sent with RST flag&lt;/p&gt;
+
+&lt;h2 id=&quot;sender&quot;&gt;Sender&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpOutDataSegs:&lt;/strong&gt; total # of data segments sent&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpOutDataBytes:&lt;/strong&gt; total # of bytes in data segments sent&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpRetransBytes:&lt;/strong&gt; total # of bytes in segments retransmitted&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpOutAck:&lt;/strong&gt; total # of acks sent&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpOutAckDelayed:&lt;/strong&gt; total # of delayed acks sent&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpOutUrg:&lt;/strong&gt; total # of segments sent with the urg flag on&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpOutWinUpdate:&lt;/strong&gt; total # of window updates sent&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpOutWinProbe:&lt;/strong&gt; total # of zero window probes sent&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpOutControl:&lt;/strong&gt; total # of control segments sent (syn, fin, rst)&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpOutFastRetrans:&lt;/strong&gt; total # of segments sent due to “fast retransmit”&lt;/p&gt;
+
+&lt;h2 id=&quot;receiver&quot;&gt;Receiver&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInAckSegs:&lt;/strong&gt; total # of ack segments received&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInAckBytes:&lt;/strong&gt; total # of bytes acked&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInDupAck:&lt;/strong&gt; total # of duplicate acks&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInAckUnsent:&lt;/strong&gt; total # of acks acking unsent data&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInDataInorderSegs:&lt;/strong&gt; total # of data segments received in order&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInDataInorderBytes:&lt;/strong&gt; total # of data bytes received in order&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInDataUnorderSegs:&lt;/strong&gt; total # of data segments received out-of-order&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInDataUnorderBytes:&lt;/strong&gt; total # of data bytes received out-of-order&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInDataDupSegs:&lt;/strong&gt; total # of complete duplicate data segments received&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInDataDupBytes:&lt;/strong&gt; total # of bytes in the complete duplicate data segments received&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInDataPartDupSegs:&lt;/strong&gt; total # of partial duplicate data segments received&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInDataPartDupBytes:&lt;/strong&gt; total # of bytes in the partial duplicate data segments received&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInDataPastWinSegs:&lt;/strong&gt; total # of data segments received past the window&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInDataPastWinBytes:&lt;/strong&gt; total # of data bytes received part the window&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInWinProbe:&lt;/strong&gt; total # of zero window probes received&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInWinUpdate:&lt;/strong&gt; total # of window updates received&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpInClosed:&lt;/strong&gt; total # of data segments received after the connection has closed&lt;/p&gt;
+
+&lt;h2 id=&quot;others&quot;&gt;Others&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpRttNoUpdate:&lt;/strong&gt; total # of failed attempts to update the rtt estimate&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpRttUpdate:&lt;/strong&gt; total # of successful attempts to update the rtt estimate&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpTimRetrans:&lt;/strong&gt; total # of retransmit timeouts&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpTimRetransDrop:&lt;/strong&gt; total # of retransmit timeouts dropping the connection&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpTimKeepalive:&lt;/strong&gt; total # of keepalive timeouts&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpTimKeepaliveProbe:&lt;/strong&gt; total # of keepalive timeouts sending a probe&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpTimKeepaliveDrop:&lt;/strong&gt; total # of keepalive timeouts dropping the connection&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpListenDrop:&lt;/strong&gt; total # of connections refused due to backlog full on listen&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpListenDropQ0:&lt;/strong&gt; total # of connections refused due to half-open queue (q0) full&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpHalfOpenDrop:&lt;/strong&gt; total # of connections dropped from a full half-open queue (q0)&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcpOutSackRetransSegs:&lt;/strong&gt; total # of retransmitted segments by SACK retransmission&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;tcp6ConnTableSize:&lt;/strong&gt; Size of tcp6ConnEntry_t&lt;/p&gt;
+
+&lt;h2 id=&quot;getting-netstat-output-into-graphite&quot;&gt;Getting Netstat output into Graphite&lt;/h2&gt;
+
+&lt;p&gt;What would blog post able statistics be if you can’t graph them into graphite using python… ?&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;from sysadm import graph
+data={}
+for line in os.popen(&quot;/usr/bin/netstat -s -P tcp&quot;).readlines():
+    netstat = line.replace(&#39;=&#39;,&#39;&#39;).replace(&#39;TCP&#39;,&#39;&#39;).split()
+    if len(netstat) == 2:
+        (k,v) = netstat
+        data[&quot;tcp.%s&quot; % k] = float(v)
+        continue
+    if len(netstat) == 4:
+        (k,v,k2,v2) = netstat
+        data[&quot;tcp.%s&quot; % k2] = float(v2)
+        data[&quot;tcp.%s&quot; % k] = float(v)
+        continue
+graph.logBulkData(data)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+</description>
+        <pubDate>Wed, 01 Feb 2012 07:19:10 -0800</pubDate>
+        <link>http://dansysadm.com//blog/2012/02/01/solaris_netstat_tcp_protocol_statistics_explained.html</link>
+        <guid isPermaLink="true">http://dansysadm.com//blog/2012/02/01/solaris_netstat_tcp_protocol_statistics_explained.html</guid>
+        
+        
+        <category>blog</category>
+        
+      </item>
+    
+      <item>
+        <title>Should I change my disk scheduler to use NOOP</title>
+        <description>&lt;p&gt;I just finished reading a white paper from Redhat (Red Hat Enterprise: Linux 5 IO Tuning Guide) and wondered if I should change my disk scheduler on my laptop that uses an SSD from CFQ( default) to NOOP.&lt;/p&gt;
+
+&lt;p&gt;My laptop runs Ubuntu 12.04 with a stripped down kernel and a few additions.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ uname -a
+Linux xps15z 3.4.1dan #1 SMP Fri Jun 8 12:17:12 EST 2012 x86_64 x86_64 x86_64 GNU/Linux
+
+$ lsb_release -a
+Distributor ID: Ubuntu
+Description: Ubuntu 12.04 LTS
+Release: 12.04
+Codename: precise
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;the-schedulers-to-choose-from&quot;&gt;The Schedulers to choose from:&lt;/h2&gt;
+&lt;p&gt;There are several types of schedulers; deadline, anticipatory (as)(n/a), completely fair queueing (cfq), simple FIFO (noop)&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;deadline:&lt;/em&gt; As the name suggests, sets a deadline (tunable: read_expire &amp;amp; write_expire) for each IO operation. Once the deadline is reached the request is serviced immediately. This allows for a guarantee a response time for each request at the trade of a guarantee delay for each request.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;completely fair queueing (cfq):&lt;/em&gt;  cfg the default from 2.6.18 onwards,  it works by sending all disk requests from processes to 1 of 64 queues. Then the scheduler will loop over the queues (completely fair) and take n ( tunable: quantum ) operations from a queue and processes them.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;FIFO (noop):&lt;/em&gt; The NOOP scheduler adds all incoming I/O requests into queue and services them in a FIFO fashion. NOOP scheduler also implements request merging, that will group requests together that are accessing a similar area on the disk.&lt;/p&gt;
+
+&lt;p&gt;The paper also described NOOP to be best suited for block devices that use flash memory.&lt;/p&gt;
+
+&lt;h2 id=&quot;how-to-change-a-devices-scheduler&quot;&gt;How to change a devices scheduler&lt;/h2&gt;
+
+&lt;p&gt;If you want to temporary change a single block devices scheduler, echo the name of the scheduler into /sys/block/&lt;block-device&gt;/queue/scheduler&lt;/block-device&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ echo &quot;noop&quot; | sudo tee /sys/block/&amp;lt;block-device&amp;gt;/queue/scheduler
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;the-tests&quot;&gt;The Tests&lt;/h2&gt;
+
+&lt;p&gt;I used hdparm and a small c program called ‘seeker’&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;cfq: results&lt;/em&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ echo &quot;cfq&quot; | sudo tee /sys/block/sda/queue/scheduler 
+$ sudo hdparm -t /dev/sda
+/dev/sda:
+  Timing buffered disk reads: 1412 MB in 3.00 seconds = 470.50 MB/sec
+$ sudo ./seeker /dev/sda
+Seeker v2.0, 2007-01-15, http://www.linuxinsight.com/how_fast_is_your_disk.html
+Benchmarking /dev/sda [244198MB], wait 30 seconds..............................
+Results: 6780 seeks/second, 0.15 ms random access time
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;em&gt;noop: results&lt;/em&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ echo &quot;noop&quot; | sudo tee /sys/block/sda/queue/scheduler
+$ sudo hdparm -t /dev/sda
+/dev/sda:
+ Timing buffered disk reads: 1420 MB in 3.00 seconds = 472.80 MB/sec
+$ sudo ./seeker /dev/sda
+Seeker v2.0, 2007-01-15, http://www.linuxinsight.com/how_fast_is_your_disk.html
+Benchmarking /dev/sda [244198MB], wait 30 seconds..............................
+Results: 6341 seeks/second, 0.16 ms random access time
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;em&gt;deadline: results&lt;/em&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ echo &quot;deadline&quot; | sudo tee /sys/block/sda/queue/scheduler
+deadline
+$ sudo hdparm -t /dev/sda
+/dev/sda:
+Timing buffered disk reads: 1408 MB in 3.00 seconds = 468.70 MB/sec
+sudo ./seeker /dev/sda
+Seeker v2.0, 2007-01-15, http://www.linuxinsight.com/how_fast_is_your_disk.html
+Benchmarking /dev/sda [244198MB], wait 30 seconds..............................
+Results: 6620 seeks/second, 0.15 ms random access time
+Results (including deadline )
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;results&quot;&gt;Results&lt;/h2&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Metric	                    cfq 	noop	dead line
+Amount Read in 3 seconds	1418	1420	1408
+Read Speed (MB/sec)			470.50	472.80	468.70
+Seeks per Second			6780	6341	6620
+Seeks time (ms)				0.16	0.15	0.15
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Overall changing the scheduler to be NOOP over CFQ has a benefit, it might be very small but it is still a benefit. I did order the laptop with an SSD purely for speed, so why not have it go that little faster.&lt;/p&gt;
+
+&lt;h2 id=&quot;keeping-the-settings-after-a-reboot&quot;&gt;Keeping the settings after a reboot&lt;/h2&gt;
+
+&lt;p&gt;By changing the GRUB_CMDLINE_LINUX_DEFAULT line in the  /etc/default/grub file to the below the settings will be applied every time the system is booted.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ sudo vi  /etc/default/grub
+GRUB_CMDLINE_LINUX_DEFAULT=&quot;quiet splash elevator=noop&quot;
+$ sudo update-grub2
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+</description>
+        <pubDate>Wed, 01 Feb 2012 07:19:10 -0800</pubDate>
+        <link>http://dansysadm.com//blog/2012/02/01/should_i_change_my_disk_scheduler_to_use_NOOP.html</link>
+        <guid isPermaLink="true">http://dansysadm.com//blog/2012/02/01/should_i_change_my_disk_scheduler_to_use_NOOP.html</guid>
+        
+        
+        <category>blog</category>
+        
+      </item>
+    
+  </channel>
+</rss>

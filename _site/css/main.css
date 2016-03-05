@@ -1,0 +1,15 @@
+body { 
+    font-size: 2em;
+    font-family: Monospace; 
+    background-color: #f3f7f2;
+    
+}
+.vertical-center {
+    min-height: 80%;
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+}
+.really-bold {
+    font-weight: 800;
+}

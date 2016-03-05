@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Graphite Send | Daniel Lawrence</title>
+  <meta name="description" content="This is an overview about how you can send data to a remote graphite server using python.">
+
+  <!-- <link rel="stylesheet" href="//css/main.css"> -->
+  <link rel="canonical" href="http://dansysadm.com//blog/2015/12/29/graphite-send.html">
+  <link rel="alternate" type="application/rss+xml" title="Daniel Lawrence" href="http://dansysadm.com//feed.xml" />
+
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" 
+	rel="stylesheet" type="text/css" />
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" 
+	rel="stylesheet" type="text/css" />
+  <link href="/css/main.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+
+  <body>
+
+    <div class="container">
+  <div class="page-header">
+
+    <h2>
+      <a href="/">/</a>
+      <strong>daniel</strong>lawrence 
+    </h2>
+    
+       <a href="/blog/">/blog</a>
+    Graphite Send
+    
+  </div>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+  <article class="post-content">
+    <p>This is an overview about how you can send data to a remote graphite server using python.</p>
+
+<p>This overview will take advantage of an opensource python module called <a href="https://github.com/daniellawrence/graphitesend">graphitesend</a>, that you can find on <a href="https://github.com/daniellawrence/graphitesend">github.com</a> or via <a href="https://pypi.python.org/pypi/graphitesend/">pypi.python.org</a>.</p>
+
+<h2 id="the-goal">The goal</h2>
+
+<p>We are going to take the <a href="https://github.com/graphite-project/graphite-web/blob/master/examples/example-client.py">example that comes with the graphite install about sending the load avg.</a> from a linux.</p>
+
+<p>The example code does not use any any extra python modules, which is nice when your getting started. However pulling in the <a href="https://github.com/daniellawrence/graphitesend">graphitesend</a> library will make it all a bit easier.</p>
+
+<h2 id="installing-the-graphitesend-module">Installing the graphitesend module</h2>
+<p>You can install the module via pip and <a href="https://pypi.python.org/pypi/graphitesend/">pypi.python.org</a></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="gp">$ </span>sudo pip install graphitesend
+</code></pre>
+</div>
+
+<p>You can also install from the source from <a href="https://github.com/daniellawrence/graphitesend">github.com</a>.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="gp">$ </span>git clone https://github.com/daniellawrence/graphitesend
+<span class="gp">$ </span><span class="nb">cd </span>graphitesend
+<span class="gp">$ </span>sudo python ./setup.py install
+</code></pre>
+</div>
+
+<h2 id="gather-the-data">Gather the data</h2>
+
+<p>Before you can send the data to graphite, you need to be able to gather the data in the first place.
+Open up the /proc/loadavg file and grab the first 3 columns.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="p">(</span><span class="n">la1</span><span class="p">,</span> <span class="n">la5</span><span class="p">,</span> <span class="n">la15</span> <span class="p">)</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s">'/proc/loadavg'</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()[:</span><span class="mi">3</span><span class="p">]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">la1</span><span class="p">,</span> <span class="n">la5</span><span class="p">,</span> <span class="n">la15</span>
+<span class="mf">0.35</span> <span class="mf">0.34</span> <span class="mf">0.30</span>
+</code></pre>
+</div>
+
+<p>Now we have 3 variables that contain the loadavg data for 1,5 and 15 minute avg.</p>
+
+<h2 id="sending-the-data-to-graphite">Sending the data to graphite</h2>
+
+<p>In this example we are going to assume that your graphite server is called <strong>graphite</strong> and its listening on port <strong>2003</strong>.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">graphitesend</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">g</span> <span class="o">=</span> <span class="n">graphitesend</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="s">'loadavg_'</span><span class="p">)</span>
+<span class="s">'sent 51 long message: systems.&lt;hostname&gt;.loadavg_1min 0.470000 1365154443</span><span class="se">\n</span><span class="s"> '</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">g</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">'5min'</span><span class="p">,</span> <span class="n">la5</span><span class="p">)</span>
+<span class="s">'sent 51 long message: systems.&lt;hostname&gt;.loadavg_5min 0.280000 1365154469</span><span class="se">\n</span><span class="s"> '</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">g</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">'15min'</span><span class="p">,</span> <span class="n">la15</span><span class="p">)</span>
+<span class="s">'sent 52 long message: systems.&lt;hostname&gt;.loadavg_15min 0.280000 1365154474</span><span class="se">\n</span><span class="s"> '</span>
+</code></pre>
+</div>
+
+<p>If your graphite instance is not called <strong>graphite</strong> or maybe not listening on port <strong>2003</strong>. 
+Then you can just change it in the init().</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">graphitesend</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">graphite_server</span><span class="o">=</span><span class="s">'graphite.prod.example.com'</span><span class="p">,</span> <span class="n">graphite_port</span><span class="o">=</span><span class="mi">1234</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>Now throw loadavg. gather into a while loop, like the example from the graphite project.</p>
+
+<p>We are also using the suffix keyword arg in the init() function to suffix all the metric names with ‘min’.</p>
+
+<p>The <strong>send_dict()</strong> lets us send a dict of data points as long as they are simple key,value pairs.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="c">#!/usr/bin/env python</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">graphitesend</span>
+
+<span class="n">g</span> <span class="o">=</span> <span class="n">graphitesend</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="s">'loadavg_'</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s">'min'</span><span class="p">)</span>
+<span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="p">(</span><span class="n">la1</span><span class="p">,</span> <span class="n">la5</span><span class="p">,</span> <span class="n">la15</span> <span class="p">)</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s">'/proc/loadavg'</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()[:</span><span class="mi">3</span><span class="p">]</span>
+    <span class="k">print</span> <span class="n">g</span><span class="o">.</span><span class="n">send_dict</span><span class="p">(</span> <span class="p">{</span><span class="s">'1'</span><span class="p">:</span> <span class="n">la1</span><span class="p">,</span> <span class="s">'5'</span><span class="p">:</span> <span class="n">la5</span><span class="p">,</span> <span class="s">'15'</span><span class="p">:</span> <span class="n">la15</span><span class="p">}</span> <span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>This will send 3 metrics to graphite with the following names.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>systems.&lt;hostname&gt;.loadavg_1min
+systems.&lt;hostname&gt;.loadavg_15min
+systems.&lt;hostname&gt;.loadavg_5min
+</code></pre>
+</div>
+
+<h2 id="more-advanced-example">More advanced example</h2>
+
+<p>Lets take a file with some alot more data the /proc/loadavg, we can take the /proc/net/netstat file.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>cat /proc/net/netstat
+TcpExt: SyncookiesSent SyncookiesRecv SyncookiesFailed EmbryonicRsts PruneCalled RcvPruned OfoPruned OutOfWindowIcmps LockDroppedIcmps ArpFilter TW TWRecycled TWKilled PAWSPassive PAWSActive PAWSEstab DelayedACKs DelayedACKLocked DelayedACKLost ListenOverflows ListenDrops TCPPrequeued TCPDirectCopyFromBacklog TCPDirectCopyFromPrequeue TCPPrequeueDropped TCPHPHits TCPHPHitsToUser TCPPureAcks TCPHPAcks TCPRenoRecovery TCPSackRecovery TCPSACKReneging TCPFACKReorder TCPSACKReorder TCPRenoReorder TCPTSReorder TCPFullUndo TCPPartialUndo TCPDSACKUndo TCPLossUndo TCPLostRetransmit TCPRenoFailures TCPSackFailures TCPLossFailures TCPFastRetrans TCPForwardRetrans TCPSlowStartRetrans TCPTimeouts TCPRenoRecoveryFail TCPSackRecoveryFail TCPSchedulerFailed TCPRcvCollapsed TCPDSACKOldSent TCPDSACKOfoSent TCPDSACKRecv TCPDSACKOfoRecv TCPAbortOnSyn TCPAbortOnData TCPAbortOnClose TCPAbortOnMemory TCPAbortOnTimeout TCPAbortOnLinger TCPAbortFailed TCPMemoryPressures TCPSACKDiscard TCPDSACKIgnoredOld TCPDSACKIgnoredNoUndo TCPSpuriousRTOs TCPMD5NotFound TCPMD5Unexpected TCPSackShifted TCPSackMerged TCPSackShiftFallback TCPBacklogDrop TCPMinTTLDrop TCPDeferAcceptDrop IPReversePathFilter TCPTimeWaitOverflow TCPReqQFullDoCookies TCPReqQFullDrop TCPRetransFail TCPRcvCoalesce
+TcpExt: 0 0 0 0 0 0 0 0 0 0 241 0 0 0 0 5 1828 1 315 0 0 40838 81 38684878 0 141783 22891 3477 2855 0 2 0 0 0 0 0 0 0 0 57 0 0 0 0 2 0 14 92 0 0 1 0 357 10 47 0 0 53 60 0 4 0 0 0 0 0 6 0 0 0 0 0 32 0 0 16 0 0 0 0 0 41419
+IpExt: InNoRoutes InTruncatedPkts InMcastPkts OutMcastPkts InBcastPkts OutBcastPkts InOctets OutOctets InMcastOctets OutMcastOctets InBcastOctets OutBcastOctets
+IpExt: 2 0 123 125 172 12 315907582 12881887 62007 60884 44576 548
+</code></pre>
+</div>
+
+<h2 id="graph-the-data-then-sent-it-to-graphite">Graph the data then sent it to graphite</h2>
+
+<p>To turn the above mess into a graphite data, its going to take 9 lines of code!</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="c">#!/usr/bin/env python</span>
+
+<span class="kn">import</span> <span class="nn">graphitesend</span>
+
+<span class="n">lines</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s">'/proc/net/netstat'</span><span class="p">)</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+
+<span class="c"># Throw away the first colum as it has a text value</span>
+<span class="n">tcp_metrics</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]</span>
+<span class="n">tcp_values</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]</span>
+<span class="n">ip_metrics</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]</span>
+<span class="n">ip_values</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]</span>
+
+<span class="c"># zip the 2 lists into 1 list.</span>
+<span class="n">data_list</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span> <span class="n">tcp_metrics</span> <span class="o">+</span> <span class="n">ip_metrics</span><span class="p">,</span> <span class="n">tcp_values</span> <span class="o">+</span> <span class="n">ip_values</span> <span class="p">)</span>
+
+<span class="n">g</span> <span class="o">=</span> <span class="n">graphitesend</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="s">'netstat.'</span><span class="p">)</span>
+<span class="n">g</span><span class="o">.</span><span class="n">send_list</span><span class="p">(</span> <span class="n">data_list</span> <span class="p">)</span>
+</code></pre>
+</div>
+
+<p>The above script generates metrics over to graphite that look like this.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>systems.&lt;hostname&gt;.netstat.InBcastPkts 211.000000 1365156828
+systems.&lt;hostname&gt;.netstat.OutBcastPkts 12.000000 1365156828
+systems.&lt;hostname&gt;.netstat.InOctets 329841457.000000 1365156828
+systems.&lt;hostname&gt;.netstat.OutOctets 13542993.000000 1365156828
+systems.&lt;hostname&gt;.netstat.InMcastOctets 62007.000000 1365156828
+systems.&lt;hostname&gt;.netstat.OutMcastOctets 60884.000000 1365156828
+systems.&lt;hostname&gt;.netstat.InBcastOctets 55275.000000 1365156828
+</code></pre>
+</div>
+
+<p>If you did not like the fact that is mixed case, then you can just throw this in the init() function</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="n">g</span> <span class="o">=</span> <span class="n">graphitesend</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">lowercase_metric_names</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<h2 id="conclusion">conclusion</h2>
+
+<p>Graphite is awesome!</p>
+
+<p>Hopefully graphitesend lets you take advantage of putting more metrics into graphite.</p>
+
+
+  </article>
+
+</div>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+ /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+ var disqus_shortname = 'dansysadm'; // required: replace example with your forum shortname
+  
+ /* * * DON'T EDIT BELOW THIS LINE * * */
+ (function() {
+     var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+     dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+     (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+ })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+      </div>
+    </div>
+
+    
+</div>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  
+  ga('create', 'UA-36354656-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+  </body>
+
+</html>
